@@ -169,6 +169,82 @@ npm run web
 
 El título se limpia antes de guardarse y no puede estar vacío. Las operaciones de escritura utilizan parámetros SQL vinculados.
 
+## Tareas para los alumnos
+
+Las tareas están en tres niveles. El nivel 1 es obligatorio para todos; el nivel 2 se elige; el nivel 3 es para quien quiera destacar.
+
+### Nivel 1 — Obligatorio (todos)
+
+Cada tarea de este nivel se resuelve con lo enseñado en la guía. Sin ayuda externa debería tomar entre 30 y 60 minutos cada una.
+
+- [ ] **T1. Contador de cuentos.** Mostrar en la cabecera de la lista cuántos cuentos hay guardados. Pista: `cuentos.length`.
+- [ ] **T2. Contador de palabras.** En el editor, mostrar debajo del cuerpo cuántas palabras lleva escritas el cuento, actualizándose mientras se escribe.
+- [ ] **T3. Vista previa en la tarjeta.** Que cada tarjeta de la lista muestre las primeras 80 letras del cuerpo del cuento debajo del título. Pista: `numberOfLines={2}` en `<Text>`.
+- [ ] **T4. Confirmar salida sin guardar.** Si el usuario modificó el texto y toca atrás, preguntarle si desea descartar los cambios.
+- [ ] **T5. Tres cuentos propios.** Escribir tres cuentos reales de la selva dentro de la app —recopilados de familiares, vecinos o de la tradición del lugar de origen del estudiante— y exportarlos.
+
+### Nivel 2 — Elegir dos
+
+Requieren investigar en la documentación de Expo. Ese es exactamente el objetivo: que el estudiante aprenda a leer documentación oficial.
+
+- [ ] **T6. Buscador.** Un `TextInput` arriba de la lista que filtre por título. Debe filtrarse en SQL, no en JavaScript. Pista: `WHERE titulo LIKE ?` con `%texto%`.
+- [ ] **T7. Marcar favoritos.** Agregar una columna `favorito INTEGER DEFAULT 0`, un botón de estrella en cada tarjeta y que los favoritos aparezcan primero.
+- [ ] **T8. Etiquetas de seres míticos.** Nueva tabla `etiqueta` y tabla puente `cuento_etiqueta`. Permitir asignar etiquetas (`chullachaqui`, `yacuruna`, `sachamama`, `tunchi`, `bufeo colorado`) y filtrar la lista por etiqueta.
+- [ ] **T9. Modo oscuro.** Detectar el tema del sistema con `useColorScheme()` y adaptar todos los colores de la app.
+- [ ] **T10. Autoguardado.** Que el cuento se guarde solo cada 3 segundos de inactividad, sin tocar el botón. Pista: `setTimeout` dentro de un `useEffect` con limpieza.
+
+### Nivel 3 — Reto abierto (opcional, puntaje extra)
+
+- [ ] **T11. Audio de la versión oral.** Grabar audio con `expo-av`, guardar la ruta del archivo en la tabla `cuento` y poder reproducirlo desde el editor. Es la funcionalidad que más valor cultural le da a la app.
+- [ ] **T12. Lugar del cuento.** Tabla `lugar` (comunidad, río, quebrada) relacionada con `cuento`, y una pantalla que agrupe los cuentos por lugar de origen.
+- [ ] **T13. Importar desde archivo.** Leer un archivo Markdown exportado previamente y volver a cargarlo en la base. Cierra el ciclo del respaldo.
+- [ ] **T14. Publicar la app.** Generar un APK instalable con `eas build -p android --profile preview` y compartirlo con un compañero para que lo instale en su celular.
+
+### Reglas de entrega
+
+1. El trabajo es individual. Se puede consultar entre compañeros, pero el código se escribe solo.
+2. Está permitido usar IA para consultar dudas, no para generar el trabajo completo. En la sustentación se preguntará por cualquier línea del código: quien no pueda explicar lo que entregó, no aprueba.
+3. Cada tarea entregada debe incluir una captura de pantalla de la funcionalidad corriendo en un celular real.
+
+## Evaluación y entrega
+
+### Rúbrica (escala vigesimal)
+
+| Criterio | Qué se evalúa | Puntos |
+| --- | --- | ---: |
+| App base funcionando | Los seis pasos completos, corriendo en celular real | 6 |
+| Tareas de nivel 1 | Las cinco tareas obligatorias resueltas | 5 |
+| Tareas de nivel 2 | Dos tareas a elección, correctas y funcionales | 4 |
+| Calidad del código | Nombres claros, sin código muerto, estilos ordenados, SQL parametrizado | 2 |
+| Sustentación | Explica su código y responde preguntas sobre cualquier línea | 3 |
+| Nivel 3 | Reto abierto resuelto | +2 extra |
+
+**Nota máxima sin puntaje extra: 20.** El puntaje extra no compensa la ausencia de la sustentación.
+
+### Escala de logro
+
+| Rango | Nivel | Descripción |
+| --- | --- | --- |
+| 18–20 | Destacado | App completa, código limpio, domina lo que escribió |
+| 14–17 | Logrado | Funciona todo lo obligatorio, explica su código |
+| 11–13 | En proceso | App base funciona, tareas incompletas |
+| 0–10 | En inicio | La app no corre o no puede explicar el código entregado |
+
+### Formato de entrega
+
+1. Repositorio en GitHub, público, llamado `cuentero-<apellido>`, con un `README.md` que incluya: nombre del estudiante, qué tareas resolvió, capturas de pantalla y los pasos para ejecutar el proyecto.
+2. El archivo `cuentos.md` exportado desde la app con los tres cuentos de la tarea T5.
+3. Importante: el repositorio no debe incluir la carpeta `node_modules`. Verificar que el archivo `.gitignore` la contenga.
+4. Enviar el enlace del repositorio por el aula virtual.
+
+### Plazos sugeridos
+
+| Hito | Cuándo |
+| --- | --- |
+| Taller presencial (sesiones 1 y 2) | Semana 1 |
+| Entrega del repositorio | Fin de la semana 2 |
+| Sustentación individual | Semana 3, en clase, 5 minutos por estudiante |
+
 ## Rutas
 
 | Ruta | Archivo | Función |
