@@ -16,7 +16,7 @@ export default function Lista() {
   const db = useSQLiteContext();
   const router = useRouter();
   const oscuro = useColorScheme() === 'dark';
-  const estilos = crearEstilos(oscuro);
+  const styles = crearEstilos(oscuro);
 
   const [cuentos, setCuentos] = useState([]);
   const [busqueda, setBusqueda] = useState('');
@@ -49,35 +49,31 @@ export default function Lista() {
   );
 
   async function alternarFavorito(item) {
-    await db.runAsync('UPDATE cuento SET favorito = ? WHERE id = ?', [
-      item.favorito ? 0 : 1,
-      item.id,
-    ]);
+    const nuevoFav = item.favorito ? 0 : 1;
+    await db.runAsync('UPDATE cuento SET favorito = ? WHERE id = ?', [nuevoFav, item.id]);
     setCuentos((prev) =>
-      [...prev]
-        .map((c) => (c.id === item.id ? { ...c, favorito: item.favorito ? 0 : 1 } : c))
-        .sort((a, b) => b.favorito - a.favorito || (b.editado < a.editado ? -1 : 1))
+      prev.map((c) => (c.id === item.id ? { ...c, favorito: nuevoFav } : c))
     );
   }
 
   return (
-    <View style={estilos.contenedor}>
+    <View style={styles.contenedor}>
       <Stack.Screen
         options={{
           title: `Cuentero (${cuentos.length})`,
           headerRight: () => (
             <Pressable onPress={() => router.push('/ajustes')}>
-              <Text style={estilos.linkCabecera}>Ajustes</Text>
+              <Text style={{ color: '#fff', fontSize: 16 }}>Ajustes</Text>
             </Pressable>
           ),
         }}
       />
 
-      <View style={estilos.busquedaContenedor}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
         <TextInput
-          style={estilos.busqueda}
+          style={styles.busqueda}
           placeholder="Buscar por título..."
-          placeholderTextColor={oscuro ? '#8a8a8a' : '#9a9a9a'}
+          placeholderTextColor={oscuro ? '#888' : '#7a8b7f'}
           value={busqueda}
           onChangeText={setBusqueda}
         />
@@ -86,17 +82,24 @@ export default function Lista() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={estilos.chips}
+        style={{ flexGrow: 0, maxHeight: 44, marginVertical: 8 }}
+        contentContainerStyle={{ paddingHorizontal: 16, gap: 8, alignItems: 'center' }}
       >
+        <Pressable
+          style={[styles.chip, filtro === 0 && styles.chipActivo]}
+          onPress={() => setFiltro(0)}
+        >
+          <Text style={[styles.chipTexto, filtro === 0 && styles.chipTextoActivo]}>todos</Text>
+        </Pressable>
         {etiquetas.map((e) => {
           const activo = filtro === e.id;
           return (
             <Pressable
               key={e.id}
-              style={[estilos.chip, activo && estilos.chipActivo]}
+              style={[styles.chip, activo && styles.chipActivo]}
               onPress={() => setFiltro(activo ? 0 : e.id)}
             >
-              <Text style={[estilos.chipTexto, activo && estilos.chipTextoActivo]}>{e.nombre}</Text>
+              <Text style={[styles.chipTexto, activo && styles.chipTextoActivo]}>{e.nombre}</Text>
             </Pressable>
           );
         })}
@@ -107,94 +110,74 @@ export default function Lista() {
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={{ padding: 16, gap: 12 }}
         ListEmptyComponent={
-          <Text style={estilos.vacio}>
+          <Text style={styles.vacio}>
             {busqueda || filtro
               ? 'No hay cuentos que coincidan.'
               : 'Todavía no hay cuentos. Toca + para escribir el primero.'}
           </Text>
         }
         renderItem={({ item }) => (
-          <Pressable style={estilos.tarjeta} onPress={() => router.push(`/cuento/${item.id}`)}>
-            <View style={estilos.tarjetaCabecera}>
-              <Text style={estilos.tarjetaTitulo} numberOfLines={1}>
-                {item.titulo}
-              </Text>
-              <Pressable hitSlop={10} onPress={() => alternarFavorito(item)}>
-                <Text style={[estilos.estrella, item.favorito === 1 && estilos.estrellaActiva]}>
-                  {item.favorito === 1 ? '★' : '☆'}
+          <Pressable style={styles.tarjeta} onPress={() => router.push(`/cuento/${item.id}`)}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={styles.tarjetaTitulo}>{item.titulo}</Text>
+              <Pressable onPress={() => alternarFavorito(item)}>
+                <Text style={{ fontSize: 18, color: item.favorito ? '#f1c40f' : '#7a8b7f' }}>
+                  {item.favorito ? '★' : '☆'}
                 </Text>
               </Pressable>
             </View>
             {!!item.cuerpo && (
-              <Text style={estilos.vistaPrevia} numberOfLines={2}>
+              <Text style={styles.tarjetaCuerpo} numberOfLines={2}>
                 {item.cuerpo}
               </Text>
             )}
-            <Text style={estilos.tarjetaFecha}>
+            <Text style={styles.tarjetaFecha}>
               {new Date(item.editado).toLocaleDateString('es-PE')}
             </Text>
           </Pressable>
         )}
       />
 
-      <Pressable style={estilos.boton} onPress={() => router.push('/cuento/nuevo')}>
-        <Text style={estilos.botonTexto}>+</Text>
+      <Pressable style={styles.boton} onPress={() => router.push('/cuento/nuevo')}>
+        <Text style={styles.botonTexto}>+</Text>
       </Pressable>
     </View>
   );
 }
 
 function crearEstilos(oscuro) {
-  const paleta = {
-    fondo: oscuro ? '#121212' : '#f7f5f0',
-    tarjeta: oscuro ? '#1e1e1e' : '#ffffff',
-    borde: oscuro ? '#333333' : '#e8e2d5',
-    titulo: oscuro ? '#d7efe3' : '#1b4332',
-    suave: oscuro ? '#9aa0a0' : '#7a8b7f',
-    primario: oscuro ? '#2d6a4f' : '#1b4332',
-    activo: oscuro ? '#40916c' : '#1b4332',
-    campo: oscuro ? '#1e1e1e' : '#ffffff',
-  };
   return StyleSheet.create({
-    contenedor: { flex: 1, backgroundColor: paleta.fondo },
-    linkCabecera: { color: '#fff', fontSize: 16 },
-    busquedaContenedor: { paddingHorizontal: 16, paddingTop: 12 },
+    contenedor: { flex: 1, backgroundColor: oscuro ? '#121212' : '#f7f5f0' },
     busqueda: {
-      backgroundColor: paleta.campo,
+      backgroundColor: oscuro ? '#1e1e1e' : '#fff',
       borderRadius: 10,
-      paddingHorizontal: 14,
-      paddingVertical: 10,
-      fontSize: 15,
+      padding: 10,
       borderWidth: 1,
-      borderColor: paleta.borde,
-      color: paleta.titulo,
+      borderColor: oscuro ? '#333' : '#e8e2d5',
+      color: oscuro ? '#fff' : '#1b4332',
     },
-    chips: { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
     chip: {
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 20,
-      backgroundColor: paleta.tarjeta,
+      backgroundColor: oscuro ? '#1e1e1e' : '#fff',
       borderWidth: 1,
-      borderColor: paleta.borde,
+      borderColor: oscuro ? '#333' : '#e8e2d5',
     },
-    chipActivo: { backgroundColor: paleta.activo, borderColor: paleta.activo },
-    chipTexto: { color: paleta.suave, fontSize: 13 },
+    chipActivo: { backgroundColor: '#1b4332', borderColor: '#1b4332' },
+    chipTexto: { color: oscuro ? '#aaa' : '#7a8b7f', fontSize: 13 },
     chipTextoActivo: { color: '#fff' },
     tarjeta: {
-      backgroundColor: paleta.tarjeta,
+      backgroundColor: oscuro ? '#1e1e1e' : '#fff',
       borderRadius: 12,
       padding: 16,
       borderWidth: 1,
-      borderColor: paleta.borde,
+      borderColor: oscuro ? '#333' : '#e8e2d5',
     },
-    tarjetaCabecera: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    tarjetaTitulo: { fontSize: 16, fontWeight: '600', color: paleta.titulo, flex: 1 },
-    estrella: { fontSize: 20, color: paleta.suave },
-    estrellaActiva: { color: '#f2b01e' },
-    vistaPrevia: { fontSize: 13, color: paleta.suave, marginTop: 6, lineHeight: 18 },
-    tarjetaFecha: { fontSize: 12, color: paleta.suave, marginTop: 6 },
-    vacio: { textAlign: 'center', color: paleta.suave, marginTop: 40 },
+    tarjetaTitulo: { fontSize: 16, fontWeight: '600', color: oscuro ? '#fff' : '#1b4332', flex: 1 },
+    tarjetaCuerpo: { fontSize: 14, color: oscuro ? '#aaa' : '#555', marginTop: 4 },
+    tarjetaFecha: { fontSize: 12, color: '#7a8b7f', marginTop: 6 },
+    vacio: { textAlign: 'center', color: '#7a8b7f', marginTop: 40 },
     boton: {
       position: 'absolute',
       right: 20,
@@ -202,7 +185,7 @@ function crearEstilos(oscuro) {
       width: 56,
       height: 56,
       borderRadius: 28,
-      backgroundColor: paleta.primario,
+      backgroundColor: '#1b4332',
       alignItems: 'center',
       justifyContent: 'center',
       elevation: 4,

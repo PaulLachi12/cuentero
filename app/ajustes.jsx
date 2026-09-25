@@ -7,7 +7,7 @@ import * as Sharing from 'expo-sharing';
 export default function Ajustes() {
   const db = useSQLiteContext();
   const oscuro = useColorScheme() === 'dark';
-  const estilos = crearEstilos(oscuro);
+  const styles = crearEstilos(oscuro);
 
   async function exportar() {
     const cuentos = await db.getAllAsync(
@@ -30,12 +30,12 @@ export default function Ajustes() {
   }
 
   return (
-    <View style={estilos.contenedor}>
+    <View style={styles.contenedor}>
       <Stack.Screen options={{ title: 'Ajustes' }} />
-      <Pressable style={estilos.boton} onPress={exportar}>
-        <Text style={estilos.botonTexto}>Exportar todos mis cuentos</Text>
+      <Pressable style={styles.boton} onPress={exportar}>
+        <Text style={styles.botonTexto}>Exportar todos mis cuentos</Text>
       </Pressable>
-      <Text style={estilos.nota}>
+      <Text style={styles.nota}>
         Se genera un archivo Markdown con todos tus cuentos y se abre el menú para compartirlo.
       </Text>
     </View>
@@ -43,20 +43,10 @@ export default function Ajustes() {
 }
 
 function crearEstilos(oscuro) {
-  const paleta = {
-    fondo: oscuro ? '#121212' : '#f7f5f0',
-    primario: oscuro ? '#2d6a4f' : '#1b4332',
-    nota: oscuro ? '#9aa0a0' : '#7a8b7f',
-  };
   return StyleSheet.create({
-    contenedor: { flex: 1, backgroundColor: paleta.fondo, padding: 16, gap: 12 },
-    boton: {
-      backgroundColor: paleta.primario,
-      borderRadius: 10,
-      paddingVertical: 14,
-      alignItems: 'center',
-    },
+    contenedor: { flex: 1, backgroundColor: oscuro ? '#121212' : '#f7f5f0', padding: 16, gap: 12 },
+    boton: { backgroundColor: '#1b4332', borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
     botonTexto: { color: '#fff', fontWeight: '600' },
-    nota: { color: paleta.nota, fontSize: 13, lineHeight: 19 },
+    nota: { color: '#7a8b7f', fontSize: 13, lineHeight: 19 },
   });
 }

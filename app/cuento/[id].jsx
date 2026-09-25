@@ -21,7 +21,7 @@ export default function Editor() {
   const { id } = useLocalSearchParams();
   const esNuevo = id === 'nuevo';
   const oscuro = useColorScheme() === 'dark';
-  const estilos = crearEstilos(oscuro);
+  const styles = crearEstilos(oscuro);
 
   const [titulo, setTitulo] = useState('');
   const [cuerpo, setCuerpo] = useState('');
@@ -73,18 +73,16 @@ export default function Editor() {
     }
     const ahora = new Date().toISOString();
     if (esNuevo) {
-      const resultado = await db.runAsync(
-        'INSERT INTO cuento (titulo, cuerpo, creado, editado, favorito) VALUES (?, ?, ?, ?, 0)',
+      const res = await db.runAsync(
+        'INSERT INTO cuento (titulo, cuerpo, creado, editado) VALUES (?, ?, ?, ?)',
         [limpio, cuerpo, ahora, ahora]
       );
-      await guardarEtiquetas(resultado.lastInsertRowId);
+      await guardarEtiquetas(res.lastInsertRowId);
     } else {
-      await db.runAsync('UPDATE cuento SET titulo = ?, cuerpo = ?, editado = ? WHERE id = ?', [
-        limpio,
-        cuerpo,
-        ahora,
-        Number(id),
-      ]);
+      await db.runAsync(
+        'UPDATE cuento SET titulo = ?, cuerpo = ?, editado = ? WHERE id = ?',
+        [limpio, cuerpo, ahora, Number(id)]
+      );
       await guardarEtiquetas(Number(id));
     }
     router.back();
@@ -92,13 +90,28 @@ export default function Editor() {
 
   function volver() {
     if (modificado) {
-      Alert.alert('Descartar cambios', 'Tienes cambios sin guardar. ¿Salir sin guardar?', [
-        { text: 'Seguir editando', style: 'cancel' },
-        { text: 'Descartar y salir', style: 'destructive', onPress: () => router.back() },
+      Alert.alert('Descartar cambios', '¿Salir sin guardar?', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Descartar', style: 'destructive', onPress: () => router.back() },
       ]);
     } else {
       router.back();
     }
+  }
+
+  function confirmarBorrado() {
+    Alert.alert('Borrar cuento', 'Esta acción no se puede deshacer.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Borrar',
+        style: 'destructive',
+        onPress: async () => {
+          await db.runAsync('DELETE FROM cuento_etiqueta WHERE cuento_id = ?', [Number(id)]);
+          await db.runAsync('DELETE FROM cuento WHERE id = ?', [Number(id)]);
+          router.back();
+        },
+      },
+    ]);
   }
 
   useEffect(() => {
@@ -113,22 +126,19 @@ export default function Editor() {
   }, [modificado]);
 
   useEffect(() => {
-    if (esNuevo) return;
-    if (!modificado) return;
-    const temporizador = setTimeout(async () => {
+    if (esNuevo || !modificado) return;
+    const t = setTimeout(async () => {
       if (titulo.trim() || cuerpo) {
-        await db.runAsync('UPDATE cuento SET titulo = ?, cuerpo = ?, editado = ? WHERE id = ?', [
-          titulo,
-          cuerpo,
-          new Date().toISOString(),
-          Number(id),
-        ]);
+        await db.runAsync(
+          'UPDATE cuento SET titulo = ?, cuerpo = ?, editado = ? WHERE id = ?',
+          [titulo, cuerpo, new Date().toISOString(), Number(id)]
+        );
         setGuardado({ titulo, cuerpo });
-        setAutoMsg('Guardado automático ✓');
+        setAutoMsg('Guardado automático');
         setTimeout(() => setAutoMsg(''), 2000);
       }
     }, 3000);
-    return () => clearTimeout(temporizador);
+    return () => clearTimeout(t);
   }, [titulo, cuerpo, modificado, esNuevo, db, id]);
 
   const palabras = cuerpo.trim() ? cuerpo.trim().split(/\s+/).length : 0;
@@ -143,59 +153,64 @@ export default function Editor() {
 
   return (
     <KeyboardAvoidingView
-      style={estilos.contenedor}
+      style={styles.contenedor}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <Stack.Screen
         options={{
           title: esNuevo ? 'Nuevo cuento' : 'Editar cuento',
           headerLeft: () => (
-            <Pressable hitSlop={8} onPress={volver}>
-              <Text style={estilos.atras}>‹ Atrás</Text>
+            <Pressable onPress={volver}>
+              <Text style={{ color: '#fff', fontSize: 16 }}>‹ Atrás</Text>
             </Pressable>
           ),
         }}
       />
       <TextInput
-        style={estilos.titulo}
+        style={styles.titulo}
         placeholder="Título del cuento"
-        placeholderTextColor={oscuro ? '#8a8a8a' : '#9a9a9a'}
+        placeholderTextColor={oscuro ? '#888' : '#7a8b7f'}
         value={titulo}
         onChangeText={setTitulo}
       />
       <TextInput
-        style={estilos.cuerpo}
+        style={styles.cuerpo}
         placeholder="Había una vez, en la quebrada..."
-        placeholderTextColor={oscuro ? '#8a8a8a' : '#9a9a9a'}
+        placeholderTextColor={oscuro ? '#888' : '#7a8b7f'}
         value={cuerpo}
         onChangeText={setCuerpo}
         multiline
         textAlignVertical="top"
       />
-      <Text style={estilos.contador}>{palabras} {palabras === 1 ? 'palabra' : 'palabras'}</Text>
-      <Text style={estilos.auto}>{autoMsg}</Text>
+      <Text style={styles.contador}>{palabras} palabras</Text>
+      {!!autoMsg && <Text style={styles.autoMsg}>{autoMsg}</Text>}
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.chips}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ flexGrow: 0, maxHeight: 40 }}
+        contentContainerStyle={{ gap: 8 }}
+      >
         {etiquetas.map((e) => {
           const activo = etiquetasSel.includes(e.id);
           return (
             <Pressable
               key={e.id}
-              style={[estilos.chip, activo && estilos.chipActivo]}
+              style={[styles.chip, activo && styles.chipActivo]}
               onPress={() => alternarEtiqueta(e.id)}
             >
-              <Text style={[estilos.chipTexto, activo && estilos.chipTextoActivo]}>{e.nombre}</Text>
+              <Text style={[styles.chipTexto, activo && styles.chipTextoActivo]}>{e.nombre}</Text>
             </Pressable>
           );
         })}
       </ScrollView>
 
-      <Pressable style={estilos.guardar} onPress={guardar}>
-        <Text style={estilos.guardarTexto}>Guardar</Text>
+      <Pressable style={styles.guardar} onPress={guardar}>
+        <Text style={styles.guardarTexto}>Guardar</Text>
       </Pressable>
       {!esNuevo && (
-        <Pressable onPress={volver}>
-          <Text style={estilos.borrar}>Borrar y salir</Text>
+        <Pressable onPress={confirmarBorrado}>
+          <Text style={styles.borrar}>Borrar este cuento</Text>
         </Pressable>
       )}
     </KeyboardAvoidingView>
@@ -203,55 +218,44 @@ export default function Editor() {
 }
 
 function crearEstilos(oscuro) {
-  const paleta = {
-    fondo: oscuro ? '#121212' : '#f7f5f0',
-    campo: oscuro ? '#1e1e1e' : '#ffffff',
-    borde: oscuro ? '#333333' : '#e8e2d5',
-    texto: oscuro ? '#d7efe3' : '#1b4332',
-    suave: oscuro ? '#9aa0a0' : '#7a8b7f',
-    primario: oscuro ? '#2d6a4f' : '#1b4332',
-    activo: oscuro ? '#40916c' : '#1b4332',
-  };
   return StyleSheet.create({
-    contenedor: { flex: 1, backgroundColor: paleta.fondo, padding: 16, gap: 12 },
-    atras: { color: '#fff', fontSize: 16 },
+    contenedor: { flex: 1, backgroundColor: oscuro ? '#121212' : '#f7f5f0', padding: 16, gap: 12 },
     titulo: {
       fontSize: 18,
       fontWeight: '600',
-      backgroundColor: paleta.campo,
+      backgroundColor: oscuro ? '#1e1e1e' : '#fff',
       borderRadius: 10,
       padding: 12,
       borderWidth: 1,
-      borderColor: paleta.borde,
-      color: paleta.texto,
+      borderColor: oscuro ? '#333' : '#e8e2d5',
+      color: oscuro ? '#fff' : '#1b4332',
     },
     cuerpo: {
       flex: 1,
       fontSize: 15,
       lineHeight: 22,
-      backgroundColor: paleta.campo,
+      backgroundColor: oscuro ? '#1e1e1e' : '#fff',
       borderRadius: 10,
       padding: 12,
       borderWidth: 1,
-      borderColor: paleta.borde,
-      color: paleta.texto,
+      borderColor: oscuro ? '#333' : '#e8e2d5',
+      color: oscuro ? '#fff' : '#333',
     },
-    contador: { textAlign: 'right', fontSize: 12, color: paleta.suave },
-    auto: { textAlign: 'right', fontSize: 12, color: '#40916c' },
-    chips: { gap: 8 },
+    contador: { textAlign: 'right', fontSize: 12, color: '#7a8b7f' },
+    autoMsg: { textAlign: 'right', fontSize: 12, color: '#40916c' },
     chip: {
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 20,
-      backgroundColor: paleta.campo,
+      backgroundColor: oscuro ? '#1e1e1e' : '#fff',
       borderWidth: 1,
-      borderColor: paleta.borde,
+      borderColor: oscuro ? '#333' : '#e8e2d5',
     },
-    chipActivo: { backgroundColor: paleta.activo, borderColor: paleta.activo },
-    chipTexto: { color: paleta.suave, fontSize: 13 },
+    chipActivo: { backgroundColor: '#1b4332', borderColor: '#1b4332' },
+    chipTexto: { color: oscuro ? '#aaa' : '#7a8b7f', fontSize: 13 },
     chipTextoActivo: { color: '#fff' },
     guardar: {
-      backgroundColor: paleta.primario,
+      backgroundColor: '#1b4332',
       borderRadius: 10,
       paddingVertical: 14,
       alignItems: 'center',
