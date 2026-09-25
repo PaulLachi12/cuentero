@@ -93,6 +93,10 @@ export default function Editor() {
       <Pressable style={styles.guardar} onPress={guardar}>
         <Text style={styles.guardarTexto}>Guardar</Text>
       </Pressable>
+    <Pressable onPress={() => keyboard.dismiss()}>
+      <Text style={{ textAling: 'right', color:'#7a8b7f'}}>Listo</Text>
+    </Pressable>
+
       {!esNuevo && (
         <Pressable onPress={confirmarBorrado}>
           <Text style={styles.borrar}>Borrar cuento</Text>
